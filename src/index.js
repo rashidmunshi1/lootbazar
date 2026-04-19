@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://faizal:Guru%40786@cluster0.01ig5.mongodb.net/lootbazar?retryWrites=true&w=majority&appName=Cluster0')
+mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
     })
