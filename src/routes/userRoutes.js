@@ -8,10 +8,15 @@ const CategoryController = require('../controllers/CategoryController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
 const {sendOtpHandler} = require('../controllers/otpController');
+const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
+
+// Apply API Key validation middleware globally for all routes in this router
+router.use(apiKeyMiddleware);
 
 //user routes
 router.get('/user/index', userController.index);
 router.post('/register', upload.single('profileImage'), userController.store);
+router.post('/verify-otp', userController.verifyOtp);
 router.get('/profile/:id/edit', userController.edit);
 router.put('/profile/:id/update', upload.single('profileImage'),userController.update);
 router.delete('/profile/:id/delete', userController.delete);

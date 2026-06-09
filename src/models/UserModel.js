@@ -22,7 +22,11 @@ const userSchema = new mongoose.Schema({
     },
     profileImage: {
         type: String, // Stores the path to the uploaded profile image
-    }
+    },
+    interests: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Category'
+    }]
 
 }, { timestamps: true });
 
