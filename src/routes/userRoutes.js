@@ -44,6 +44,9 @@ router.get('/categories/:id/edit', CategoryController.edit);
 router.put('/categories/:id/update', CategoryController.update);
 router.delete('/categories/:id/delete', CategoryController.delete);
 
+router.get('/categories/filter/:parentId', CategoryController.getByParent);
+router.get('/categories/all-grouped', CategoryController.getAllGrouped);
+
 
 //status routes
 router.post('/status/store', upload.single('media'), StatusController.store);
