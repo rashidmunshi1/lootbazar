@@ -14,6 +14,11 @@ const categorySchema = new mongoose.Schema({
     image: {
         type: String, // URL for category image
     },
+    parentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category', // Links a subcategory to its parent category
+    default: null
+}
 }, { timestamps: true });
 
 const Category = mongoose.model('Category', categorySchema);
