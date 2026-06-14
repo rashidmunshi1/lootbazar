@@ -29,10 +29,7 @@ const UserController = {
             }
 
             // Check if user already exists
-            const existingUser = await User.findOne({ mobileno: formattedMobile });
-            if (existingUser) {
-                return res.status(400).json({ message: "User with this mobile number is already registered" });
-            }
+            let user = await User.findOne({ mobileno: formattedMobile });
 
             // Capture the uploaded profile image path using multer
             const profileImage = req.file ? req.file.path.replace(/\\/g, '/') : null;
@@ -43,18 +40,30 @@ const UserController = {
             // Send WhatsApp OTP via AiSensy
             await sendAisensyOtp(formattedMobile, generatedOtp);
 
-            const newUser = new User({
-                name,
-                mobileno: formattedMobile,
-                otp: generatedOtp,
-                address,
-                pincode,
-                profileImage
-            });
+            let savedUser;
+            if (user) {
+                // Update existing user with new OTP and other details if provided
+                user.otp = generatedOtp;
+                if (name) user.name = name;
+                if (address) user.address = address;
+                if (pincode) user.pincode = pincode;
+                if (profileImage) user.profileImage = profileImage;
+                savedUser = await user.save();
+            } else {
+                // Create a new user
+                const newUser = new User({
+                    name,
+                    mobileno: formattedMobile,
+                    otp: generatedOtp,
+                    address,
+                    pincode,
+                    profileImage
+                });
+                savedUser = await newUser.save();
+            }
     
-            const savedUser = await newUser.save();
-            res.status(201).json({
-                message: "User registered and WhatsApp OTP sent successfully",
+            res.status(200).json({
+                message: "WhatsApp OTP sent successfully",
                 user: savedUser,
                 otp: generatedOtp // for testing purposes
             });
