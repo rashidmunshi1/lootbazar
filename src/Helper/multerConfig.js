@@ -30,5 +30,25 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
+// File filter for video-only formats
+const videoFileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('video/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only video files are allowed.'), false);
+    }
+};
+
 const upload = multer({ storage, fileFilter });
-module.exports = upload;
+const uploadVideo = multer({ 
+    storage, 
+    fileFilter: videoFileFilter,
+    limits: {
+        fileSize: 100 * 1024 * 1024 // 100MB limit
+    }
+});
+
+module.exports = {
+    upload,
+    uploadVideo
+};

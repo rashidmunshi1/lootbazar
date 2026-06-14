@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const upload = require('../Helper/multerConfig');
+const { upload, uploadVideo } = require('../Helper/multerConfig');
 
 const userController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
 const CategoryController = require('../controllers/CategoryController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
+const VideoController = require('../controllers/VideoController');
 const {sendOtpHandler} = require('../controllers/otpController');
 const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
 
@@ -55,5 +56,7 @@ router.delete('/status/:id', StatusController.deleteStatus);
 router.post('/products/:productId/view', notificationController.viewProduct);
 router.get('/notifications', notificationController.getNotifications);
 
+// Video Upload routes
+router.post('/upload-video', uploadVideo.single('video'), VideoController.upload);
 
 module.exports = router;
