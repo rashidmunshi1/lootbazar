@@ -7,12 +7,10 @@ const categorySchema = new mongoose.Schema({
         unique: true,
         trim: true,
     },
-    description: {
-        type: String,
-        trim: true
-    },
-    image: {
-        type: String, // URL for category image
+    order: {
+        type: Number,
+        required: true,
+        default: 0,
     },
 }, { timestamps: true });
 

@@ -39,7 +39,7 @@ router.get('/products/details/:id', ProductController.produtsDetails);
 
 //Category routes
 router.get('/categories', CategoryController.index);
-router.post('/categories/store', upload.single('image'),CategoryController.store);
+router.post('/categories/store', CategoryController.store);
 router.get('/categories/:id/edit', CategoryController.edit);
 router.put('/categories/:id/update', CategoryController.update);
 router.delete('/categories/:id/delete', CategoryController.delete);

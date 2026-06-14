@@ -5,7 +5,7 @@ const CategoryController = {
     // Fetch all categories
     index: async (req, res) => {
         try {
-            const categories = await Category.find();
+            const categories = await Category.find().select('-image -description').sort({ order: 1 });
             res.status(200).json(categories);
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -15,19 +15,22 @@ const CategoryController = {
     // Add a new category
     store: async (req, res) => {
         try {
-            const { name, description } = req.body;
-    
-            // Capture the uploaded image path from multer
-            const imagePath = req.file ? req.file.path.replace(/\\/g, '/') : null;
+            const { name, order } = req.body;
     
             const newCategory = new Category({
                 name,
-                description,
-                image: imagePath,  // Save image path in the database
+                order,
             });
     
             const savedCategory = await newCategory.save();
-            res.status(201).json(savedCategory);
+            const categoryObj = savedCategory.toObject();
+            delete categoryObj.image;
+            delete categoryObj.description;
+            
+            res.status(201).json({
+                message: "Category successfully added",
+                category: categoryObj
+            });
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -37,7 +40,7 @@ const CategoryController = {
     edit: async (req, res) => {
         try {
             const { id } = req.params;
-            const category = await Category.findById(id);
+            const category = await Category.findById(id).select('-image -description');
             if (!category) {
                 return res.status(404).json({ message: "Category not found" });
             }
@@ -51,12 +54,12 @@ const CategoryController = {
     update: async (req, res) => {
         try {
             const { id } = req.params;
-            const { name, description, image } = req.body;
+            const { name, order } = req.body;
             const updatedCategory = await Category.findByIdAndUpdate(
                 id,
-                { name, description, image },
+                { name, order },
                 { new: true, runValidators: true }
-            );
+            ).select('-image -description');
             if (!updatedCategory) {
                 return res.status(404).json({ message: "Category not found" });
             }
