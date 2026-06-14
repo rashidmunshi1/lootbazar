@@ -8,7 +8,6 @@ const CategoryController = require('../controllers/CategoryController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
 const VideoController = require('../controllers/VideoController');
-const CloudinaryController = require('../controllers/CloudinaryController');
 const {sendOtpHandler} = require('../controllers/otpController');
 const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
 
@@ -26,9 +25,9 @@ router.post('/admin/login', userController.adminLogin);
 router.post('/send-otp', sendOtpHandler);
 //product routes
 router.get('/products', ProductController.index);
-router.post('/products/store', upload.array('images', 5), ProductController.store);
+router.post('/products/store', ProductController.store);
 router.get('/products/:id/edit', ProductController.edit);
-router.put('/products/:id/update', upload.array('images', 5),ProductController.update);   
+router.put('/products/:id/update', ProductController.update);   
 router.delete('/products/:id/delete-image', ProductController.deleteImage);
 router.delete('/products/:id/delete', ProductController.delete);
 // GET all products by category ID
@@ -58,7 +57,6 @@ router.post('/products/:productId/view', notificationController.viewProduct);
 router.get('/notifications', notificationController.getNotifications);
 
 // Video Upload routes
-router.get('/cloudinary-signature', CloudinaryController.getSignature);
 router.post('/upload-video', VideoController.upload);
 
 module.exports = router;

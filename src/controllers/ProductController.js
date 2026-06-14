@@ -34,15 +34,20 @@ const ProductController = {
     // Add a new product
     store: async (req, res) => {
         try {
-            const { title, description, price, stock,moq, category, userId, location, phoneNumber } = req.body;
+            const { title, description, price, stock, moq, category, userId, location, phoneNumber, images: bodyImages } = req.body;
              // Check if userId exists in the database
             const userExists = await User.findById(userId);
             if (!userExists) {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            // Capture image file paths
-            const images = req.files.map(file => file.filename); 
+            // Capture image URLs from request body, with fallback to uploaded file names
+            let images = [];
+            if (bodyImages) {
+                images = Array.isArray(bodyImages) ? bodyImages : [bodyImages];
+            } else if (Array.isArray(req.files)) {
+                images = req.files.map(file => file.filename); 
+            }
 
             const newProduct = new Product({
                 title,
@@ -88,8 +93,12 @@ const ProductController = {
                 return res.status(404).json({ message: "Product not found" });
             }
     
-            // ✅ If new images are uploaded, merge with existing ones
-            if (req.files && req.files.length > 0) {
+            // ✅ If new image URLs are provided in request body, merge them
+            if (updateFields.images) {
+                const newImages = Array.isArray(updateFields.images) ? updateFields.images : [updateFields.images];
+                updateFields.images = [...product.images, ...newImages];
+            } else if (Array.isArray(req.files) && req.files.length > 0) {
+                // Fallback if files are uploaded
                 const newImages = req.files.map(file => file.path);
                 updateFields.images = [...product.images, ...newImages];
             }
