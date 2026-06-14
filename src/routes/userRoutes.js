@@ -8,6 +8,7 @@ const CategoryController = require('../controllers/CategoryController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
 const VideoController = require('../controllers/VideoController');
+const CloudinaryController = require('../controllers/CloudinaryController');
 const {sendOtpHandler} = require('../controllers/otpController');
 const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
 
@@ -57,6 +58,7 @@ router.post('/products/:productId/view', notificationController.viewProduct);
 router.get('/notifications', notificationController.getNotifications);
 
 // Video Upload routes
-router.post('/upload-video', uploadVideo.single('video'), VideoController.upload);
+router.get('/cloudinary-signature', CloudinaryController.getSignature);
+router.post('/upload-video', VideoController.upload);
 
 module.exports = router;

@@ -1,54 +1,25 @@
-const cloudinary = require('../Helper/cloudinaryConfig');
-const fs = require('fs');
-
 const VideoController = {
-    // Upload a video file to Cloudinary and return its public URL and metadata
+    // Save and register metadata of a video pre-uploaded directly from the client side to Cloudinary
     upload: async (req, res) => {
-        let tempFilePath = null;
         try {
-            if (!req.file) {
-                return res.status(400).json({ message: "No video file provided" });
-            }
+            const { url, duration, publicId, size, mimetype, filename } = req.body;
 
-            tempFilePath = req.file.path;
-
-            // Upload video file directly from the temporary folder to Cloudinary
-            const result = await cloudinary.uploader.upload(tempFilePath, {
-                resource_type: "video",
-                folder: "lootbazar"
-            });
-
-            // Clean up the temporary local file
-            try {
-                if (fs.existsSync(tempFilePath)) {
-                    fs.unlinkSync(tempFilePath);
-                }
-            } catch (unlinkError) {
-                console.error("Failed to delete temp file:", unlinkError);
+            if (!url) {
+                return res.status(400).json({ message: "Cloudinary video URL is required in request body" });
             }
 
             res.status(200).json({
-                message: "Video uploaded successfully to Cloudinary",
+                message: "Video metadata registered successfully",
                 video: {
-                    filename: req.file.filename,
-                    url: result.secure_url,
-                    publicId: result.public_id,
-                    size: req.file.size,
-                    mimetype: req.file.mimetype,
-                    duration: result.duration ? parseFloat(result.duration.toFixed(2)) : null
+                    filename: filename || url.split('/').pop(),
+                    url,
+                    publicId: publicId || null,
+                    size: size || null,
+                    mimetype: mimetype || 'video/mp4',
+                    duration: duration ? parseFloat(Number(duration).toFixed(2)) : null
                 }
             });
         } catch (error) {
-            // Clean up the temporary file on error
-            if (tempFilePath) {
-                try {
-                    if (fs.existsSync(tempFilePath)) {
-                        fs.unlinkSync(tempFilePath);
-                    }
-                } catch (unlinkError) {
-                    console.error("Failed to delete temp file during error cleanup:", unlinkError);
-                }
-            }
             res.status(500).json({ error: error.message });
         }
     }
