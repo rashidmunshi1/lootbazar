@@ -1,5 +1,4 @@
-const { getVideoDurationInSeconds } = require('get-video-duration');
-const ffprobeStatic = require('ffprobe-static');
+const { getMp4Duration } = require('../Helper/videoDurationHelper');
 
 const VideoController = {
     // Upload a video file and return its metadata and access URL (including timeline/duration)
@@ -14,13 +13,8 @@ const VideoController = {
             const protocol = req.protocol;
             const videoUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
 
-            // Extract video duration/timeline in seconds
-            let duration = null;
-            try {
-                duration = await getVideoDurationInSeconds(req.file.path, ffprobeStatic.path);
-            } catch (durationError) {
-                console.error("Failed to parse video duration:", durationError);
-            }
+            // Extract video duration/timeline in seconds (pure JS, zero external dependencies)
+            const duration = getMp4Duration(req.file.path);
 
             res.status(200).json({
                 message: "Video uploaded successfully",
