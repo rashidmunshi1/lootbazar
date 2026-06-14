@@ -6,6 +6,9 @@ const apiKeyMiddleware = (req, res, next) => {
     const apiKey = req.headers['x-api-key'] || req.headers['apikey'];
     const expectedApiKey = process.env.API_KEY || 'lootbazar_secret_api_key';
 
+    console.log(`[API Key Validation] Path: ${req.path}, Method: ${req.method}`);
+    console.log(`[API Key Validation] Received: "${apiKey}", Expected: "${expectedApiKey}"`);
+
     if (!apiKey || apiKey !== expectedApiKey) {
         return res.status(401).json({
             error: "Unauthorized",

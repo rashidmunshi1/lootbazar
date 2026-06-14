@@ -20,6 +20,7 @@ router.post('/verify-otp', userController.verifyOtp);
 router.get('/profile/:id/edit', userController.edit);
 router.put('/profile/:id/update', upload.single('profileImage'),userController.update);
 router.delete('/profile/:id/delete', userController.delete);
+router.post('/admin/login', userController.adminLogin);
 router.post('/send-otp', sendOtpHandler);
 //product routes
 router.get('/products', ProductController.index);

@@ -199,6 +199,34 @@ const UserController = {
             res.status(500).json({ error: error.message });
         }
     },
+
+    // Admin Login
+    adminLogin: async (req, res) => {
+        try {
+            const { email, password } = req.body;
+            const expectedEmail = process.env.ADMIN_EMAIL || 'admin@lootbaazar.com';
+            const expectedPassword = process.env.ADMIN_PASSWORD || 'admin123';
+
+            if (!email || !password) {
+                return res.status(400).json({ message: "Email and password are required" });
+            }
+
+            if (email === expectedEmail && password === expectedPassword) {
+                res.status(200).json({
+                    message: "Admin login successful",
+                    user: {
+                        email: expectedEmail,
+                        name: 'LootBaazar Admin',
+                        role: 'Super Admin'
+                    }
+                });
+            } else {
+                res.status(401).json({ error: "Invalid email or password" });
+            }
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
 };
 
 module.exports = UserController;
