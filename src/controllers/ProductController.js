@@ -13,12 +13,16 @@ const ProductController = {
             
             // Calculate the number of documents to skip
             const skip = (page - 1) * limit;
+            
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     
             // Fetch products with pagination applied
-            const products = await Product.find().skip(skip).limit(limit);
+            const products = await Product.find({ createdAt: { $gt: twentyFourHoursAgo } })
+                .skip(skip)
+                .limit(limit);
             
             // Count total products for pagination metadata
-            const totalProducts = await Product.countDocuments();
+            const totalProducts = await Product.countDocuments({ createdAt: { $gt: twentyFourHoursAgo } });
     
             res.status(200).json({
                 currentPage: page,
@@ -180,13 +184,16 @@ const ProductController = {
             const pageNumber = parseInt(page);
             const limitNumber = parseInt(limit);
     
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const query = { category: categoryId, createdAt: { $gt: twentyFourHoursAgo } };
+    
             // Fetch products with pagination
-            const products = await Product.find({ category: categoryId })
+            const products = await Product.find(query)
                 .skip((pageNumber - 1) * limitNumber)
                 .limit(limitNumber);
     
             // Count total products for the category
-            const totalProducts = await Product.countDocuments({ category: categoryId });
+            const totalProducts = await Product.countDocuments(query);
     
             if (products.length === 0) {
                 return res.status(404).json({ message: "No products found for this category." });
@@ -213,7 +220,8 @@ const ProductController = {
             }
     
             // Build the query object dynamically
-            let query = {};
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            let query = { createdAt: { $gt: twentyFourHoursAgo } };
             if (title) {
                 query.title = { $regex: new RegExp(title, "i") }; // Case-insensitive search for title
             }
