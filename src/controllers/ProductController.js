@@ -38,19 +38,71 @@ const ProductController = {
     // Add a new product
     store: async (req, res) => {
         try {
-            const { title, description, price, stock, moq, category, userId, location, phoneNumber, images: bodyImages } = req.body;
+            console.log("Store request - Body:", req.body);
+            console.log("Store request - Files:", req.files);
+            // Trim keys in req.body to prevent trailing/leading space typos (like 'title ')
+            const cleanedBody = {};
+            for (const key in req.body) {
+                cleanedBody[key.trim()] = req.body[key];
+            }
+            const { title, description, price, stock, moq, category, userId, location, phoneNumber, images: bodyImages } = cleanedBody;
              // Check if userId exists in the database
             const userExists = await User.findById(userId);
             if (!userExists) {
                 return res.status(404).json({ message: "User not found" });
             }
 
-            // Capture image URLs from request body, with fallback to uploaded file names
+            // Parse category which can be a string, array, or JSON stringified array of category IDs
+            let categoryIds = [];
+            if (category) {
+                if (typeof category === 'string') {
+                    try {
+                        if (category.startsWith('[') && category.endsWith(']')) {
+                            categoryIds = JSON.parse(category);
+                        } else {
+                            categoryIds = [category];
+                        }
+                    } catch (e) {
+                        categoryIds = [category];
+                    }
+                } else if (Array.isArray(category)) {
+                    categoryIds = category;
+                }
+            }
+
+            // Capture image URLs from request body, or upload multiple files to Cloudinary
             let images = [];
-            if (bodyImages) {
-                images = Array.isArray(bodyImages) ? bodyImages : [bodyImages];
-            } else if (Array.isArray(req.files)) {
-                images = req.files.map(file => file.filename); 
+            
+            if (req.files && req.files.length > 0) {
+                const cloudinary = require('../Helper/cloudinaryConfig');
+                const fs = require('fs');
+                for (const file of req.files) {
+                    try {
+                        const result = await cloudinary.uploader.upload(file.path, {
+                            folder: 'products'
+                        });
+                        images.push({
+                            url: result.secure_url,
+                            publicId: result.public_id
+                        });
+                        if (fs.existsSync(file.path)) {
+                            fs.unlinkSync(file.path);
+                        }
+                    } catch (uploadError) {
+                        console.error("Failed to upload product image to Cloudinary in store:", uploadError);
+                        if (fs.existsSync(file.path)) {
+                            fs.unlinkSync(file.path);
+                        }
+                    }
+                }
+            } else if (bodyImages) {
+                const rawImages = Array.isArray(bodyImages) ? bodyImages : [bodyImages];
+                images = rawImages.map(img => {
+                    if (typeof img === 'object' && img.url) {
+                        return { url: img.url, publicId: img.publicId || null };
+                    }
+                    return { url: img, publicId: null };
+                });
             }
 
             const newProduct = new Product({
@@ -60,7 +112,7 @@ const ProductController = {
                 stock,
                 moq,
                 images,
-                category,
+                category: categoryIds,
                 userId,
                 location,
                 phoneNumber
@@ -90,21 +142,71 @@ const ProductController = {
     update: async (req, res) => {
         try {
             const { id } = req.params;
-            const updateFields = req.body; // Capture the provided fields from the request body
+            // Trim keys in req.body to prevent trailing/leading space typos (like 'title ')
+            const updateFields = {};
+            for (const key in req.body) {
+                updateFields[key.trim()] = req.body[key];
+            }
     
             const product = await Product.findById(id);
             if (!product) {
                 return res.status(404).json({ message: "Product not found" });
             }
     
-            // ✅ If new image URLs are provided in request body, merge them
-            if (updateFields.images) {
-                const newImages = Array.isArray(updateFields.images) ? updateFields.images : [updateFields.images];
-                updateFields.images = [...product.images, ...newImages];
-            } else if (Array.isArray(req.files) && req.files.length > 0) {
-                // Fallback if files are uploaded
-                const newImages = req.files.map(file => file.path);
-                updateFields.images = [...product.images, ...newImages];
+            // Handle image updates
+            let mergedImages = [...product.images];
+            
+            if (req.files && req.files.length > 0) {
+                const cloudinary = require('../Helper/cloudinaryConfig');
+                const fs = require('fs');
+                for (const file of req.files) {
+                    try {
+                        const result = await cloudinary.uploader.upload(file.path, {
+                            folder: 'products'
+                        });
+                        mergedImages.push({
+                            url: result.secure_url,
+                            publicId: result.public_id
+                        });
+                        if (fs.existsSync(file.path)) {
+                            fs.unlinkSync(file.path);
+                        }
+                    } catch (uploadError) {
+                        console.error("Failed to upload updated product image to Cloudinary:", uploadError);
+                        if (fs.existsSync(file.path)) {
+                            fs.unlinkSync(file.path);
+                        }
+                    }
+                }
+                updateFields.images = mergedImages;
+            } else if (updateFields.images) {
+                const rawImages = Array.isArray(updateFields.images) ? updateFields.images : [updateFields.images];
+                const formattedImages = rawImages.map(img => {
+                    if (typeof img === 'object' && img.url) {
+                        return { url: img.url, publicId: img.publicId || null };
+                    }
+                    return { url: img, publicId: null };
+                });
+                updateFields.images = [...product.images, ...formattedImages];
+            }
+    
+            // Handle category updates
+            if (updateFields.category) {
+                let categoryIds = [];
+                if (typeof updateFields.category === 'string') {
+                    try {
+                        if (updateFields.category.startsWith('[') && updateFields.category.endsWith(']')) {
+                            categoryIds = JSON.parse(updateFields.category);
+                        } else {
+                            categoryIds = [updateFields.category];
+                        }
+                    } catch (e) {
+                        categoryIds = [updateFields.category];
+                    }
+                } else if (Array.isArray(updateFields.category)) {
+                    categoryIds = updateFields.category;
+                }
+                updateFields.category = categoryIds;
             }
     
             // ✅ Merge existing product data with the provided fields
@@ -120,42 +222,94 @@ const ProductController = {
         }    
     },
 
-    deleteImage : async (req, res) => {
+    deleteImage: async (req, res) => {
         try {
             const { id } = req.params;
-            const { index } = req.body; // Image index instead of path
+            const { imageId, index } = req.body; 
     
             // Fetch the product by ID
             const product = await Product.findById(id);
             if (!product) {
                 return res.status(404).json({ message: "Product not found" });
             }
-    
-            // Check if the provided index is valid
-            if (index < 0 || index >= product.images.length) {
-                return res.status(400).json({ message: "Invalid image index" });
-            }
-    
-            // Get the image path based on the index
-            const imagePath = product.images[index];
-    
-            // Remove the image from the array
-            product.images.splice(index, 1);
-    
-            // Attempt to delete the file from the server
-            try {
-                const normalizedPath = path.normalize(imagePath);
-                if (fs.existsSync(normalizedPath)) {
-                    fs.unlinkSync(normalizedPath);
+            
+            let targetImage = null;
+            let targetIndex = -1;
+
+            if (imageId) {
+                // Find image by its subdocument _id
+                targetIndex = product.images.findIndex(img => img._id && img._id.toString() === imageId);
+                if (targetIndex !== -1) {
+                    targetImage = product.images[targetIndex];
+                } else {
+                    return res.status(404).json({ message: "Image ID not found on this product" });
                 }
-            } catch (fileError) {
-                console.error("Error deleting file:", fileError);
+            } else if (index !== undefined) {
+                // Fallback to index
+                const idx = parseInt(index);
+                if (idx >= 0 && idx < product.images.length) {
+                    targetIndex = idx;
+                    targetImage = product.images[idx];
+                } else {
+                    return res.status(400).json({ message: "Invalid image index" });
+                }
+            } else {
+                return res.status(400).json({ message: "Please provide imageId or index to delete" });
+            }
+
+            const imagePath = targetImage.url;
+            const publicId = targetImage.publicId;
+
+            // Remove the image from the array
+            product.images.splice(targetIndex, 1);
+    
+            // Attempt to delete the file from the server or Cloudinary
+            if (publicId) {
+                try {
+                    const cloudinary = require('../Helper/cloudinaryConfig');
+                    await cloudinary.uploader.destroy(publicId);
+                } catch (clError) {
+                    console.error("Failed to delete image from Cloudinary:", clError);
+                }
+            } else if (imagePath && imagePath.includes('cloudinary.com')) {
+                // Extract publicId fallback
+                const extractPublicId = (url) => {
+                    try {
+                        const parts = url.split('/upload/');
+                        if (parts.length > 1) {
+                            const pathAfterUpload = parts[1].replace(/^v\d+\//, '');
+                            const extensionIndex = pathAfterUpload.lastIndexOf('.');
+                            return extensionIndex !== -1 ? pathAfterUpload.substring(0, extensionIndex) : pathAfterUpload;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                    }
+                    return null;
+                };
+                const extractedId = extractPublicId(imagePath);
+                if (extractedId) {
+                    try {
+                        const cloudinary = require('../Helper/cloudinaryConfig');
+                        await cloudinary.uploader.destroy(extractedId);
+                    } catch (clError) {
+                        console.error("Failed to delete image from Cloudinary:", clError);
+                    }
+                }
+            } else if (imagePath) {
+                try {
+                    const normalizedPath = path.normalize(imagePath);
+                    const fs = require('fs');
+                    if (fs.existsSync(normalizedPath)) {
+                        fs.unlinkSync(normalizedPath);
+                    }
+                } catch (fileError) {
+                    console.error("Error deleting local file:", fileError);
+                }
             }
     
             // Save the updated product data
             await product.save();
             res.status(200).json({ message: "Image deleted successfully", product });
-    
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

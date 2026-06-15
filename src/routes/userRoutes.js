@@ -25,9 +25,9 @@ router.post('/admin/login', userController.adminLogin);
 router.post('/send-otp', sendOtpHandler);
 //product routes
 router.get('/products', ProductController.index);
-router.post('/products/store', ProductController.store);
+router.post('/products/store', upload.array('images', 10), ProductController.store);
 router.get('/products/:id/edit', ProductController.edit);
-router.put('/products/:id/update', ProductController.update);   
+router.put('/products/:id/update', upload.array('images', 10), ProductController.update);   
 router.delete('/products/:id/delete-image', ProductController.deleteImage);
 router.delete('/products/:id/delete', ProductController.delete);
 // GET all products by category ID

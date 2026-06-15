@@ -14,15 +14,15 @@ const productSchema = new mongoose.Schema({
         required: true,
         min: 0
     },
-    category: {
+    category: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Category',                      
+        ref: 'Category',
         required: true
-    },
+    }],
     userId: {
-        type:mongoose.Schema.Types.ObjectId,
-        ref:'User',
-        required:true
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
     stock: {
         type: Number,
@@ -41,9 +41,16 @@ const productSchema = new mongoose.Schema({
         type: String,
     },
     images: [{
-        type: String, // Array of image URLs
+        url: {
+            type: String,
+            required: true
+        },
+        publicId: {
+            type: String,
+            default: null
+        }
     }],
-}, { 
+}, {
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true }

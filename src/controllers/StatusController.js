@@ -40,8 +40,48 @@ const deleteStatus = async (req, res) => {
             return res.status(404).json({ message: "Status not found" });
         }
 
-        // Delete the video file from the server
-        fs.unlinkSync(status.video);
+        // Delete from Cloudinary if stored there
+        if (status.publicId) {
+            try {
+                const cloudinary = require('../Helper/cloudinaryConfig');
+                await cloudinary.uploader.destroy(status.publicId, { resource_type: 'video' });
+            } catch (cloudinaryError) {
+                console.error("Failed to delete video from Cloudinary:", cloudinaryError);
+            }
+        } else if (status.video && status.video.includes('cloudinary.com')) {
+            // Extract publicId fallback
+            const extractPublicId = (url) => {
+                try {
+                    const parts = url.split('/video/upload/');
+                    if (parts.length > 1) {
+                        const pathAfterUpload = parts[1].replace(/^v\d+\//, '');
+                        const extensionIndex = pathAfterUpload.lastIndexOf('.');
+                        return extensionIndex !== -1 ? pathAfterUpload.substring(0, extensionIndex) : pathAfterUpload;
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+                return null;
+            };
+            const publicId = extractPublicId(status.video);
+            if (publicId) {
+                try {
+                    const cloudinary = require('../Helper/cloudinaryConfig');
+                    await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+                } catch (clError) {
+                    console.error("Failed to delete video from Cloudinary:", clError);
+                }
+            }
+        } else if (status.video) {
+            // Local file deletion
+            try {
+                if (fs.existsSync(status.video)) {
+                    fs.unlinkSync(status.video);
+                }
+            } catch (fileError) {
+                console.error("Failed to delete local video file:", fileError);
+            }
+        }
 
         await Status.findByIdAndDelete(id);
         res.status(200).json({ message: "Status deleted successfully" });
