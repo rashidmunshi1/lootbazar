@@ -238,12 +238,8 @@ const ProductController = {
         try {
             const { userId } = req.params;
     
-            // Find all products with the provided category ID
-            const products = await Product.find({ userId: userId }).populate('userId');
-    
-            if (products.length === 0) {
-                return res.status(404).json({ message: "No products found for this user." });
-            }
+            // Find all products with the provided user ID
+            const products = await Product.find({ userId: userId });
     
             res.status(200).json(products);
         } catch (error) {
