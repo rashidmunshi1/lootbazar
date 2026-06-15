@@ -43,7 +43,18 @@ const productSchema = new mongoose.Schema({
     images: [{
         type: String, // Array of image URLs
     }],
-}, { timestamps: true });
+}, { 
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+});
+
+// Virtual field to dynamically calculate active/expired status based on 24 hours limit
+productSchema.virtual('status').get(function () {
+    if (!this.createdAt) return 'active';
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return this.createdAt > twentyFourHoursAgo ? 'active' : 'expired';
+});
 
 const Product = mongoose.model('Product', productSchema);
 module.exports = Product;
