@@ -272,9 +272,37 @@ const ProductController = {
             // Fetch viewers list only if the logged-in user is the product owner
             let viewers = [];
             if (userId && product.userId.toString() === userId) {
-                viewers = await Notification.find({ productId: id })
+                const rawViewers = await Notification.find({ productId: id })
                     .populate('viewerUserId')
                     .sort({ createdAt: -1 });
+
+                // Helper to format time in human format
+                const formatHumanTime = (dateString) => {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const seconds = Math.floor((now - date) / 1000);
+                    
+                    if (seconds < 60) return 'Just now';
+                    const minutes = Math.floor(seconds / 60);
+                    if (minutes < 60) return `${minutes} minutes ago`;
+                    const hours = Math.floor(minutes / 60);
+                    if (hours < 24) return `${hours} hours ago`;
+                    const days = Math.floor(hours / 24);
+                    if (days === 1) return 'Yesterday';
+                    if (days < 30) return `${days} days ago`;
+                    
+                    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+                };
+
+                viewers = rawViewers.map(v => {
+                    const viewer = v.viewerUserId || {};
+                    return {
+                        userId: viewer._id || null,
+                        name: viewer.name || "Unknown User",
+                        address: viewer.address || "Not specified",
+                        time: formatHumanTime(v.viewedAt || v.createdAt)
+                    };
+                });
             }
 
             res.status(200).json({
