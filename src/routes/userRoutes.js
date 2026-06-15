@@ -16,10 +16,10 @@ router.use(apiKeyMiddleware);
 
 //user routes
 router.get('/user/index', userController.index);
-router.post('/register', upload.single('profileImage'), userController.store);
+router.post('/register', userController.store);
 router.post('/verify-otp', userController.verifyOtp);
 router.get('/profile/:id/edit', userController.edit);
-router.put('/profile/:id/update', upload.single('profileImage'),userController.update);
+router.put('/profile/:id/update', userController.update);
 router.delete('/profile/:id/delete', userController.delete);
 router.post('/admin/login', userController.adminLogin);
 router.post('/send-otp', sendOtpHandler);

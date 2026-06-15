@@ -16,7 +16,7 @@ const UserController = {
     // Create a new user
     store: async (req, res) => {
         try {
-            const { name, mobileno, address, pincode } = req.body;
+                        const { name, mobileno, address, pincode, profileImage: bodyProfileImage } = req.body;
             
             if (!mobileno) {
                 return res.status(400).json({ message: "Mobile number is required" });
@@ -31,8 +31,8 @@ const UserController = {
             // Check if user already exists
             let user = await User.findOne({ mobileno: formattedMobile });
 
-            // Capture the uploaded profile image path using multer
-            const profileImage = req.file ? req.file.path.replace(/\\/g, '/') : null;
+            // Capture the profile image (support direct URL or multer file upload)
+            const profileImage = bodyProfileImage || (req.file ? req.file.path.replace(/\\/g, '/') : null);
     
             // Generate a dynamic 4-digit OTP
             const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -90,15 +90,15 @@ const UserController = {
     update: async (req, res) => {
         try {
             const { id } = req.params;
-            const { name, address, pincode, interests } = req.body;
+            const { name, address, pincode, interests, profileImage: bodyProfileImage } = req.body;
 
             // Address is required unless updating interests only
             if (!interests && !address) {
                 return res.status(400).json({ message: "Address is required" });
             }
             
-            // Check if a new profile image was uploaded
-            const profileImage = req.file ? req.file.path.replace(/\\/g, '/') : null;
+            // Capture the profile image (support direct URL or multer file upload)
+            const profileImage = bodyProfileImage || (req.file ? req.file.path.replace(/\\/g, '/') : null);
             
             const updateData = {};
             if (name !== undefined) updateData.name = name;
