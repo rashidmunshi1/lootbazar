@@ -37,6 +37,19 @@ const VideoController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+
+    // Fetch all video records (listing API) with populated user and product details
+    index: async (req, res) => {
+        try {
+            const videos = await Status.find()
+                .populate('userId')
+                .populate('productId')
+                .sort({ createdAt: -1 }); // Newest first
+            res.status(200).json(videos);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 

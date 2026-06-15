@@ -58,5 +58,6 @@ router.get('/notifications', notificationController.getNotifications);
 
 // Video Upload routes
 router.post('/upload-video', VideoController.upload);
+router.get('/videos', VideoController.index);
 
 module.exports = router;
