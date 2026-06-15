@@ -58,7 +58,7 @@ router.get('/products/:productId/viewers', notificationController.getProductView
 router.get('/notifications', notificationController.getNotifications);
 
 // Video Upload routes
-router.post('/upload-video', VideoController.upload);
+router.post('/upload-video', uploadVideo.single('video'), VideoController.upload);
 router.get('/videos', VideoController.index);
 
 module.exports = router;
