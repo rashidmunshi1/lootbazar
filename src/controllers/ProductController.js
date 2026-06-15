@@ -195,10 +195,6 @@ const ProductController = {
             // Count total products for the category
             const totalProducts = await Product.countDocuments(query);
     
-            if (products.length === 0) {
-                return res.status(404).json({ message: "No products found for this category." });
-            }
-    
             res.status(200).json({
                 products,
                 totalPages: Math.ceil(totalProducts / limitNumber),
