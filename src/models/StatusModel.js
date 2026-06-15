@@ -15,6 +15,26 @@ const statusSchema = new mongoose.Schema({
         type: String, // URL or path to the video file
         required: true
     },
+    duration: {
+        type: String,
+        default: null
+    },
+    publicId: {
+        type: String,
+        default: null
+    },
+    size: {
+        type: Number,
+        default: null
+    },
+    mimetype: {
+        type: String,
+        default: null
+    },
+    filename: {
+        type: String,
+        default: null
+    },
     expiresAt: {
         type: Date,
         default: () => Date.now() + 24 * 60 * 60 * 1000, // Expires after 24 hours

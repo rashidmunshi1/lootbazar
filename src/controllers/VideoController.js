@@ -49,22 +49,19 @@ const VideoController = {
             const newStatus = new Status({
                 userId,
                 productId,
-                video: videoUrl
+                video: videoUrl,
+                duration: videoDuration ? Number(videoDuration).toFixed(2) : null,
+                publicId: videoPublicId || null,
+                size: videoSize || null,
+                mimetype: videoMimetype || 'video/mp4',
+                filename: videoFilename || videoUrl.split('/').pop()
             });
 
             const savedStatus = await newStatus.save();
 
             res.status(200).json({
                 message: "Video registered and saved successfully",
-                status: savedStatus,
-                video: {
-                    filename: videoFilename || videoUrl.split('/').pop(),
-                    url: videoUrl,
-                    publicId: videoPublicId || null,
-                    size: videoSize || null,
-                    mimetype: videoMimetype || 'video/mp4',
-                    duration: videoDuration ? parseFloat(Number(videoDuration).toFixed(2)) : null
-                }
+                status: savedStatus
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
