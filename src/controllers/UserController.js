@@ -31,8 +31,25 @@ const UserController = {
             // Check if user already exists
             let user = await User.findOne({ mobileno: formattedMobile });
 
-            // Capture the profile image (support direct URL or multer file upload)
-            const profileImage = bodyProfileImage || (req.file ? req.file.path.replace(/\\/g, '/') : null);
+            // Capture the profile image (support direct URL or multer file upload to Cloudinary)
+            let profileImage = bodyProfileImage;
+            if (req.file) {
+                try {
+                    const cloudinary = require('../Helper/cloudinaryConfig');
+                    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+                        folder: 'profiles'
+                    });
+                    profileImage = uploadResult.secure_url;
+                    
+                    // Clean up temp file
+                    const fs = require('fs');
+                    if (fs.existsSync(req.file.path)) {
+                        fs.unlinkSync(req.file.path);
+                    }
+                } catch (uploadError) {
+                    console.error("Cloudinary upload failed in register:", uploadError);
+                }
+            }
     
             // Generate a dynamic 4-digit OTP
             const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
@@ -97,8 +114,25 @@ const UserController = {
                 return res.status(400).json({ message: "Address is required" });
             }
             
-            // Capture the profile image (support direct URL or multer file upload)
-            const profileImage = bodyProfileImage || (req.file ? req.file.path.replace(/\\/g, '/') : null);
+            // Capture the profile image (support direct URL or multer file upload to Cloudinary)
+            let profileImage = bodyProfileImage;
+            if (req.file) {
+                try {
+                    const cloudinary = require('../Helper/cloudinaryConfig');
+                    const uploadResult = await cloudinary.uploader.upload(req.file.path, {
+                        folder: 'profiles'
+                    });
+                    profileImage = uploadResult.secure_url;
+                    
+                    // Clean up temp file
+                    const fs = require('fs');
+                    if (fs.existsSync(req.file.path)) {
+                        fs.unlinkSync(req.file.path);
+                    }
+                } catch (uploadError) {
+                    console.error("Cloudinary upload failed in profile update:", uploadError);
+                }
+            }
             
             const updateData = {};
             if (name !== undefined) updateData.name = name;

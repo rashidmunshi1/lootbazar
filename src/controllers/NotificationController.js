@@ -33,13 +33,25 @@ viewProduct: async (req, res) => {
 },
 
 getNotifications: async (req, res) => {
-    try {
-        const notifications = await Notification.find({ isRead: false }).populate('productId viewerUserId');
-        res.status(200).json(notifications);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
+        try {
+            const notifications = await Notification.find({ isRead: false }).populate('productId viewerUserId');
+            res.status(200).json(notifications);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    getProductViewers: async (req, res) => {
+        try {
+            const { productId } = req.params;
+            const viewers = await Notification.find({ productId })
+                .populate('viewerUserId')
+                .sort({ createdAt: -1 });
+            res.status(200).json(viewers);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
-}
 };
 
 module.exports = notificationController;

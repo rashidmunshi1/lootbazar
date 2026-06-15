@@ -52,6 +52,27 @@ const videoFileFilter = (req, file, cb) => {
     }
 };
 
+// Configure temporary storage for profile image uploads
+const profileStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, os.tmpdir());
+    },
+    filename: (req, file, cb) => {
+        const uniqueSuffix = crypto.randomBytes(8).toString('hex');
+        const fileExtension = path.extname(file.originalname);
+        cb(null, `profile-${Date.now()}-${uniqueSuffix}${fileExtension}`);
+    }
+});
+
+// File filter for profile images
+const profileFileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Invalid file type. Only image files are allowed.'), false);
+    }
+};
+
 const upload = multer({ storage, fileFilter });
 const uploadVideo = multer({ 
     storage: videoStorage, 
@@ -61,7 +82,16 @@ const uploadVideo = multer({
     }
 });
 
+const uploadProfileImage = multer({
+    storage: profileStorage,
+    fileFilter: profileFileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB limit
+    }
+});
+
 module.exports = {
     upload,
-    uploadVideo
+    uploadVideo,
+    uploadProfileImage
 };
