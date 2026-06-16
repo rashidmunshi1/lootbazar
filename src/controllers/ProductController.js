@@ -362,29 +362,37 @@ const ProductController = {
 
     searchProduct: async (req, res) => {
         try {
-            const { title, category } = req.query; // Get title and category from query parameters
+            const { title, category, search } = req.query; // Get search terms (could be product name or category name)
     
-            // Check if both title and category are missing
-            if (!title && !category) {
-                return res.status(400).json({ error: "Please provide a product title or category to search." });
-            }
+            const searchKeyword = search || title || category;
     
             // Build the query object dynamically
             const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             let query = { createdAt: { $gt: twentyFourHoursAgo } };
-            if (title) {
-                query.title = { $regex: new RegExp(title, "i") }; // Case-insensitive search for title
-            }
-            if (category) {
-                query.category = category; // Exact match for category ID
+            
+            if (searchKeyword) {
+                const Category = require("../models/CategoryModel");
+                
+                // Find all categories whose name matches the search keyword (case-insensitive)
+                const matchingCategories = await Category.find({
+                    name: { $regex: new RegExp(searchKeyword, "i") }
+                });
+                const categoryIds = matchingCategories.map(cat => cat._id);
+
+                // Build $or conditions to search in product title OR product category array
+                let orConditions = [
+                    { title: { $regex: new RegExp(searchKeyword, "i") } }
+                ];
+
+                if (categoryIds.length > 0) {
+                    orConditions.push({ category: { $in: categoryIds } });
+                }
+
+                query.$or = orConditions;
             }
     
             // Search products based on the constructed query
             const products = await Product.find(query);
-    
-            if (products.length === 0) {
-                return res.status(404).json({ message: "No products found with the provided criteria." });
-            }
     
             res.status(200).json(products);
         } catch (error) {
