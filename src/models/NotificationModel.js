@@ -8,8 +8,7 @@ const notificationSchema = new mongoose.Schema({
     },
     viewerUserId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'User'
     },
     viewedAt: {
         type: Date,

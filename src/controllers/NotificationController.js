@@ -17,7 +17,7 @@ viewProduct: async (req, res) => {
         }
 
         // Prevent notification if the owner views their own product
-        if (product.userId.toString() === viewerUserId) {
+        if (viewerUserId && product.userId.toString() === viewerUserId.toString()) {
             return res.status(200).json({ message: "Owner viewed the product. No notification stored." });
         }
 
