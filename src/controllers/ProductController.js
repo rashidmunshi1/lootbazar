@@ -437,6 +437,7 @@ const ProductController = {
 
             // Fetch viewers list only if the logged-in user is the product owner
             let viewers = [];
+            let groupedViewers = {};
             if (userId && product.userId.toString() === userId) {
                 const rawViewers = await Notification.find({ productId: id })
                     .populate('viewerUserId')
@@ -466,16 +467,34 @@ const ProductController = {
                         userId: viewer._id || null,
                         name: viewer.name || "Unknown User",
                         address: viewer.address || "Not specified",
-                        time: formatHumanTime(v.viewedAt || v.createdAt)
+                        time: formatHumanTime(v.viewedAt || v.createdAt),
+                        type: v.type || 'view'
                     };
                 });
+
+                // Group viewers by type
+                viewers.forEach(v => {
+                    const t = v.type || 'view';
+                    if (!groupedViewers[t]) {
+                        groupedViewers[t] = [];
+                    }
+                    groupedViewers[t].push(v);
+                });
             }
+
+            // Fetch similar products in the same category (excluding current product)
+            const similarProducts = await Product.find({
+                _id: { $ne: id },
+                category: { $in: product.category }
+            }).limit(10);
 
             res.status(200).json({
                 product,
                 videos,
                 viewsCount,
-                viewers
+                viewers,
+                groupedViewers,
+                similarProducts
             });
         } catch (error) {
             res.status(500).json({ error: error.message });

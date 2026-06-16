@@ -6,7 +6,9 @@ const notificationController = {
 viewProduct: async (req, res) => {
     try {
         const { productId } = req.params;  
-        const { viewerUserId } = req.body;
+        const { viewerUserId, type: bodyType } = req.body;
+        const queryType = req.query.type;
+        const type = bodyType || queryType || 'view';
 
         // Fetch the product and check if it exists
         const product = await Product.findById(productId);
@@ -22,7 +24,8 @@ viewProduct: async (req, res) => {
         // Create a notification entry for product view
         const newNotification = new Notification({
             productId,
-            viewerUserId
+            viewerUserId,
+            type
         });
         await newNotification.save();
 
