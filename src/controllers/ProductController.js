@@ -14,15 +14,19 @@ const ProductController = {
             // Calculate the number of documents to skip
             const skip = (page - 1) * limit;
             
-            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            let query = {};
+            if (req.query.all !== 'true') {
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                query.createdAt = { $gt: twentyFourHoursAgo };
+            }
     
             // Fetch products with pagination applied
-            const products = await Product.find({ createdAt: { $gt: twentyFourHoursAgo } })
+            const products = await Product.find(query)
                 .skip(skip)
                 .limit(limit);
             
             // Count total products for pagination metadata
-            const totalProducts = await Product.countDocuments({ createdAt: { $gt: twentyFourHoursAgo } });
+            const totalProducts = await Product.countDocuments(query);
     
             res.status(200).json({
                 currentPage: page,
