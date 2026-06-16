@@ -35,9 +35,26 @@ viewProduct: async (req, res) => {
     }
 },
 
-getNotifications: async (req, res) => {
+    getNotifications: async (req, res) => {
         try {
-            const notifications = await Notification.find({ isRead: false }).populate('productId viewerUserId');
+            const { userId, isRead } = req.query;
+            let query = {};
+
+            if (userId) {
+                // Find all products owned by this merchant/user
+                const products = await Product.find({ userId }).select('_id');
+                const productIds = products.map(p => p._id);
+                query.productId = { $in: productIds };
+            }
+
+            if (isRead !== undefined) {
+                query.isRead = isRead === 'true';
+            }
+
+            const notifications = await Notification.find(query)
+                .populate('productId viewerUserId')
+                .sort({ createdAt: -1 });
+
             res.status(200).json(notifications);
         } catch (error) {
             res.status(500).json({ error: error.message });

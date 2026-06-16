@@ -436,8 +436,7 @@ const ProductController = {
             const viewsCount = await Notification.countDocuments({ productId: id });
 
             // Fetch viewers list only if the logged-in user is the product owner
-            let viewers = [];
-            let groupedViewers = {};
+            let viewers = {};
             if (userId && product.userId.toString() === userId) {
                 const rawViewers = await Notification.find({ productId: id })
                     .populate('viewerUserId')
@@ -461,7 +460,7 @@ const ProductController = {
                     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
                 };
 
-                viewers = rawViewers.map(v => {
+                const flatViewers = rawViewers.map(v => {
                     const viewer = v.viewerUserId || {};
                     return {
                         userId: viewer._id || null,
@@ -472,13 +471,13 @@ const ProductController = {
                     };
                 });
 
-                // Group viewers by type
-                viewers.forEach(v => {
+                // Group viewers by type directly into the viewers object
+                flatViewers.forEach(v => {
                     const t = v.type || 'view';
-                    if (!groupedViewers[t]) {
-                        groupedViewers[t] = [];
+                    if (!viewers[t]) {
+                        viewers[t] = [];
                     }
-                    groupedViewers[t].push(v);
+                    viewers[t].push(v);
                 });
             }
 
@@ -493,7 +492,6 @@ const ProductController = {
                 videos,
                 viewsCount,
                 viewers,
-                groupedViewers,
                 similarProducts
             });
         } catch (error) {
