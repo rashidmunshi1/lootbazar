@@ -57,6 +57,9 @@ router.post('/products/:productId/view', notificationController.viewProduct);
 router.get('/products/:productId/viewers', notificationController.getProductViewers);
 router.get('/notifications', notificationController.getNotifications);
 
+// Product image upload route
+router.post('/products/upload-image', upload.single('image'), ProductController.uploadProductImage);
+
 // Video Upload routes
 router.post('/upload-video', uploadVideo.single('video'), VideoController.upload);
 router.get('/videos', VideoController.index);

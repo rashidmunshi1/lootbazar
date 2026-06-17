@@ -497,6 +497,77 @@ const ProductController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+
+    uploadProductImage: async (req, res) => {
+        try {
+            const { userId, productId } = req.body;
+            
+            if (!productId) {
+                return res.status(400).json({ message: "productId is required" });
+            }
+            if (!userId) {
+                return res.status(400).json({ message: "userId is required" });
+            }
+            if (!req.file) {
+                return res.status(400).json({ message: "image file is required" });
+            }
+
+            // Verify product exists
+            const product = await Product.findById(productId);
+            if (!product) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+
+            // Verify user exists
+            const userExists = await User.findById(userId);
+            if (!userExists) {
+                return res.status(404).json({ message: "User not found" });
+            }
+
+            // Upload image to Cloudinary
+            const cloudinary = require('../Helper/cloudinaryConfig');
+            let imageUrl = '';
+            let publicId = null;
+
+            try {
+                const result = await cloudinary.uploader.upload(req.file.path, {
+                    folder: 'products'
+                });
+                imageUrl = result.secure_url;
+                publicId = result.public_id;
+
+                // Clean up local temp file
+                if (fs.existsSync(req.file.path)) {
+                    fs.unlinkSync(req.file.path);
+                }
+            } catch (uploadError) {
+                console.error("Cloudinary upload failed, using local fallback path:", uploadError);
+                // Fallback to local upload path if Cloudinary fails or is not configured
+                imageUrl = req.file.path;
+            }
+
+            // Push to product's images array
+            product.images.push({
+                url: imageUrl,
+                publicId: publicId
+            });
+
+            await product.save();
+
+            res.status(200).json({
+                message: "Image uploaded and added to product successfully",
+                imageUrl,
+                publicId,
+                product
+            });
+        } catch (error) {
+            // Clean up temp file in case of error
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 
