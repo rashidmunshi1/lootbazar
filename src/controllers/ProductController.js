@@ -366,37 +366,63 @@ const ProductController = {
 
     searchProduct: async (req, res) => {
         try {
-            const { title, category, search } = req.query; // Get search terms (could be product name or category name)
-    
-            const searchKeyword = search || title || category;
-    
-            // Build the query object dynamically
-            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            let query = { createdAt: { $gt: twentyFourHoursAgo } };
+            const { title, category, search } = req.query;
+            const mongoose = require('mongoose');
+            const Category = require("../models/CategoryModel");
             
-            if (searchKeyword) {
-                const Category = require("../models/CategoryModel");
-                
-                // Find all categories whose name matches the search keyword (case-insensitive)
-                const matchingCategories = await Category.find({
-                    name: { $regex: new RegExp(searchKeyword, "i") }
-                });
-                const categoryIds = matchingCategories.map(cat => cat._id);
+            let query = {};
 
-                // Build $or conditions to search in product title OR product category array
-                let orConditions = [
-                    { title: { $regex: new RegExp(searchKeyword, "i") } }
-                ];
+            // By default, if no search term/category is provided, restrict to active products (last 24 hours)
+            if (req.query.all !== 'true' && !search && !title && !category) {
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                query.createdAt = { $gt: twentyFourHoursAgo };
+            }
 
-                if (categoryIds.length > 0) {
-                    orConditions.push({ category: { $in: categoryIds } });
+            // 1. If explicit category is passed
+            if (category) {
+                if (mongoose.Types.ObjectId.isValid(category)) {
+                    query.category = category;
+                } else {
+                    // Search by category name
+                    const matchedCategory = await Category.findOne({
+                        name: { $regex: new RegExp(category, "i") }
+                    });
+                    if (matchedCategory) {
+                        query.category = matchedCategory._id;
+                    } else {
+                        // Category name was passed but not found in DB
+                        return res.status(200).json([]);
+                    }
+                }
+            }
+
+            // 2. If general search or title parameter is passed
+            const term = search || title;
+            if (term) {
+                let orConditions = [];
+
+                // Match product title
+                orConditions.push({ title: { $regex: new RegExp(term, "i") } });
+
+                // If term is a valid ObjectId (directly search category by ID)
+                if (mongoose.Types.ObjectId.isValid(term)) {
+                    orConditions.push({ category: term });
+                } else {
+                    // Match category name
+                    const matchingCategories = await Category.find({
+                        name: { $regex: new RegExp(term, "i") }
+                    });
+                    const categoryIds = matchingCategories.map(cat => cat._id);
+                    if (categoryIds.length > 0) {
+                        orConditions.push({ category: { $in: categoryIds } });
+                    }
                 }
 
                 query.$or = orConditions;
             }
-    
+
             // Search products based on the constructed query
-            const products = await Product.find(query);
+            const products = await Product.find(query).populate('category');
     
             res.status(200).json(products);
         } catch (error) {
