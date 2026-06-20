@@ -336,14 +336,28 @@ const ProductController = {
     listBycategoryId: async (req, res) => {
         try {
             const { categoryId } = req.params;
-            const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+            const { page = 1, limit = 10, search, title, all } = req.query;
     
             // Convert page and limit to numbers
-            const pageNumber = parseInt(page);
-            const limitNumber = parseInt(limit);
+            const pageNumber = parseInt(page) || 1;
+            const limitNumber = parseInt(limit) || 10;
     
-            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            const query = { category: categoryId, createdAt: { $gt: twentyFourHoursAgo } };
+            let query = { category: categoryId };
+
+            // Default behavior is to restrict to products from the last 24 hours, unless all=true is passed
+            if (all !== 'true') {
+                const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+                query.createdAt = { $gt: twentyFourHoursAgo };
+            }
+
+            // Apply search term filtering on title and description if provided
+            const searchTerm = search || title;
+            if (searchTerm) {
+                query.$or = [
+                    { title: { $regex: new RegExp(searchTerm, "i") } },
+                    { description: { $regex: new RegExp(searchTerm, "i") } }
+                ];
+            }
     
             // Fetch products with pagination
             const products = await Product.find(query)
@@ -362,7 +376,7 @@ const ProductController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
-    },    
+    },
 
     searchProduct: async (req, res) => {
         try {
