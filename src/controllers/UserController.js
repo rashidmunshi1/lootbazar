@@ -89,6 +89,20 @@ const UserController = {
         }    
     },
 
+    // Fetch a single user profile (with populated interests)
+    getProfile: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const user = await User.findById(id).populate('interests');
+            if (!user) {
+                return res.status(404).json({ message: "User not found" });
+            }
+            res.status(200).json(user);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
     // Fetch a single user by ID
     edit: async (req, res) => {
         try {

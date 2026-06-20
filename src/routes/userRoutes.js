@@ -19,6 +19,7 @@ router.use(apiKeyMiddleware);
 router.get('/user/index', userController.index);
 router.post('/register', uploadProfileImage.single('profileImage'), userController.store);
 router.post('/verify-otp', userController.verifyOtp);
+router.get('/profile/:id', userController.getProfile);
 router.get('/profile/:id/edit', userController.edit);
 router.put('/profile/:id/update', uploadProfileImage.single('profileImage'), userController.update);
 router.delete('/profile/:id/delete', userController.delete);
@@ -68,6 +69,8 @@ router.get('/videos', VideoController.index);
 // Coupon routes
 router.post('/coupons/store', CouponController.store);
 router.get('/coupons', CouponController.index);
+router.get('/coupons/active', CouponController.activeCoupons);
+router.post('/coupons/validate', CouponController.validateCoupon);
 router.put('/coupons/:id/update', CouponController.update);
 router.put('/coupons/:id/toggle', CouponController.toggleStatus);
 router.delete('/coupons/:id/delete', CouponController.delete);
