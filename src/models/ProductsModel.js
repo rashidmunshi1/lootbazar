@@ -40,6 +40,10 @@ const productSchema = new mongoose.Schema({
     phoneNumber: {
         type: String,
     },
+    paymentStatus: {
+        type: String,
+        default: 'pending'
+    },
     images: [{
         url: {
             type: String,

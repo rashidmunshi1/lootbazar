@@ -110,13 +110,28 @@ const VideoController = {
     },
 
     // Fetch all video records (listing API) with populated user and product details
+    // Excludes videos of expired products (older than 24 hours)
     index: async (req, res) => {
         try {
             const videos = await Status.find()
                 .populate('userId')
                 .populate('productId')
                 .sort({ createdAt: -1 }); // Newest first
-            res.status(200).json(videos);
+
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const activeVideos = videos.filter(video => {
+                // Filter out videos if the associated product is deleted
+                if (!video.productId) return false;
+
+                // If product has no createdAt, default to active/visible
+                if (!video.productId.createdAt) return true;
+
+                // Check 24 hour limit (same as Product status virtual definition)
+                const productCreatedAt = new Date(video.productId.createdAt);
+                return productCreatedAt > twentyFourHoursAgo;
+            });
+
+            res.status(200).json(activeVideos);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }

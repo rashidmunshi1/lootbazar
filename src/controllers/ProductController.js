@@ -49,7 +49,7 @@ const ProductController = {
             for (const key in req.body) {
                 cleanedBody[key.trim()] = req.body[key];
             }
-            const { title, description, price, stock, moq, category, userId, location, phoneNumber, images: bodyImages } = cleanedBody;
+            const { title, description, price, stock, moq, category, userId, location, phoneNumber, paymentStatus, images: bodyImages } = cleanedBody;
              // Check if userId exists in the database
             const userExists = await User.findById(userId);
             if (!userExists) {
@@ -119,7 +119,8 @@ const ProductController = {
                 category: categoryIds,
                 userId,
                 location,
-                phoneNumber
+                phoneNumber,
+                paymentStatus: paymentStatus || 'pending'
             });
             const savedProduct = await newProduct.save();
             res.status(201).json(savedProduct);
@@ -607,6 +608,55 @@ const ProductController = {
                 fs.unlinkSync(req.file.path);
             }
             res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Update payment status of a product listing
+    updatePaymentStatus: async (req, res) => {
+        try {
+            const { productId, userId, paymentStatus } = req.body;
+            const mongoose = require('mongoose');
+
+            // Validation of fields presence
+            if (!productId || !userId || !paymentStatus) {
+                return res.status(400).json({
+                    success: false,
+                    message: "productId, userId, and paymentStatus are required."
+                });
+            }
+
+            // Validation of ObjectId format
+            if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid format for productId or userId. Must be a 24-character hex string."
+                });
+            }
+
+            // Update status directly using findOneAndUpdate to avoid validating unrelated fields (like legacy images with missing url)
+            const updatedProduct = await Product.findOneAndUpdate(
+                { _id: productId, userId },
+                { $set: { paymentStatus } },
+                { new: true, runValidators: true }
+            );
+
+            if (!updatedProduct) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Product listing not found for the given productId and userId."
+                });
+            }
+
+            res.status(200).json({
+                success: true,
+                message: "Product listing payment status updated successfully.",
+                product: updatedProduct
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                error: error.message
+            });
         }
     }
 };

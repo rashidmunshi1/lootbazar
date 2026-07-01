@@ -10,6 +10,7 @@ const notificationController = require('../controllers/NotificationController');
 const VideoController = require('../controllers/VideoController');
 const {sendOtpHandler} = require('../controllers/otpController');
 const CouponController = require('../controllers/CouponController');
+const OrderController = require('../controllers/OrderController');
 const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
 
 // Apply API Key validation middleware globally for all routes in this router
@@ -74,5 +75,14 @@ router.post('/coupons/validate', CouponController.validateCoupon);
 router.put('/coupons/:id/update', CouponController.update);
 router.put('/coupons/:id/toggle', CouponController.toggleStatus);
 router.delete('/coupons/:id/delete', CouponController.delete);
+
+// Order routes
+router.post('/orders/store', OrderController.store);
+router.get('/orders', OrderController.index);
+router.get('/orders/:orderId', OrderController.show);
+router.put('/orders/:orderId/status', OrderController.updateStatus);
+
+// Product listing payment status
+router.put('/products/payment-status', ProductController.updatePaymentStatus);
 
 module.exports = router;
