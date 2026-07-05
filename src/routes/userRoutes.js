@@ -5,6 +5,7 @@ const { upload, uploadVideo, uploadProfileImage } = require('../Helper/multerCon
 const userController = require('../controllers/UserController');
 const ProductController = require('../controllers/ProductController');
 const CategoryController = require('../controllers/CategoryController');
+const SettingController = require('../controllers/SettingController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
 const VideoController = require('../controllers/VideoController');
@@ -44,10 +45,14 @@ router.get('/products/details/:id', ProductController.produtsDetails);
 
 //Category routes
 router.get('/categories', CategoryController.index);
-router.post('/categories/store', CategoryController.store);
+router.post('/categories/store', upload.single('image'), CategoryController.store);
 router.get('/categories/:id/edit', CategoryController.edit);
-router.put('/categories/:id/update', CategoryController.update);
+router.put('/categories/:id/update', upload.single('image'), CategoryController.update);
 router.delete('/categories/:id/delete', CategoryController.delete);
+
+//Setting routes
+router.get('/settings', SettingController.getSetting);
+router.post('/settings/save', SettingController.saveSetting);
 
 
 //status routes

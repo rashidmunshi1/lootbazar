@@ -97,7 +97,16 @@ const UserController = {
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
             }
-            res.status(200).json(user);
+            
+            const userObj = user.toObject();
+            
+            const Setting = require('../models/SettingModel');
+            const setting = await Setting.findOne();
+            
+            userObj.apiKey = setting ? (setting.apiKey || '') : '';
+            userObj.amount = setting ? (setting.amount || 0) : 0;
+            
+            res.status(200).json(userObj);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
