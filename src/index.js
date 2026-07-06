@@ -34,17 +34,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// Disable Mongoose buffering globally so queries fail instantly if DB is down
-mongoose.set('bufferCommands', false);
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log(`Successfully initiated connection to MongoDB at ${process.env.MONGODB_URI}`);
-    })
-    .catch(err => {
-        console.error('Initial MongoDB connection error:', err);
-    });
+// Enable Mongoose buffering (default) to handle minor network handshakes
+mongoose.set('bufferCommands', true);
 
 // Log detailed connection status events
 mongoose.connection.on('connected', () => {
@@ -56,6 +47,30 @@ mongoose.connection.on('error', (err) => {
 mongoose.connection.on('disconnected', () => {
     console.log('MongoDB connection status: Disconnected.');
 });
+
+// Database connection middleware for Serverless/Vercel environments
+const connectDb = async (req, res, next) => {
+    // If connection is already open, reuse it
+    if (mongoose.connection.readyState === 1) {
+        return next();
+    }
+    
+    try {
+        console.log('Connecting to MongoDB...');
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('MongoDB connected successfully.');
+        next();
+    } catch (err) {
+        console.error('MongoDB connection middleware error:', err);
+        return res.status(500).json({
+            error: "Database Connection Error",
+            message: "Failed to connect to the database: " + err.message
+        });
+    }
+};
+
+// Use database connection middleware for API routes
+app.use('/api', connectDb);
 
 // Base Route
 app.get('/', (req, res) => {
