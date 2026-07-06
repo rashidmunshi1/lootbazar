@@ -34,6 +34,9 @@ app.use((req, res, next) => {
     next();
 });
 
+// Disable Mongoose buffering globally so queries fail instantly if DB is down
+mongoose.set('bufferCommands', false);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
@@ -42,6 +45,17 @@ mongoose.connect(process.env.MONGODB_URI)
     .catch(err => {
         console.error('MongoDB connection error:', err);
     });
+
+// Database connection check middleware for API routes
+app.use('/api', (req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({
+            error: "Service Unavailable",
+            message: "Database connection is not established. Please check if your MongoDB server is running."
+        });
+    }
+    next();
+});
 
 // Base Route
 app.get('/', (req, res) => {
