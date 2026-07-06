@@ -40,11 +40,22 @@ mongoose.set('bufferCommands', false);
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
-        console.log('Connected to MongoDB');
+        console.log(`Successfully initiated connection to MongoDB at ${process.env.MONGODB_URI}`);
     })
     .catch(err => {
-        console.error('MongoDB connection error:', err);
+        console.error('Initial MongoDB connection error:', err);
     });
+
+// Log detailed connection status events
+mongoose.connection.on('connected', () => {
+    console.log('MongoDB connection status: Connected successfully.');
+});
+mongoose.connection.on('error', (err) => {
+    console.error('MongoDB connection status: Error encountered:', err);
+});
+mongoose.connection.on('disconnected', () => {
+    console.log('MongoDB connection status: Disconnected.');
+});
 
 // Base Route
 app.get('/', (req, res) => {
