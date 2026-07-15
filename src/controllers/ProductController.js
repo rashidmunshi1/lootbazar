@@ -507,6 +507,7 @@ const ProductController = {
                         userId: viewer._id || null,
                         name: viewer.name || "Unknown User",
                         address: viewer.address || "Not specified",
+                        phoneNumber: viewer.mobileno || "Not specified",
                         time: formatHumanTime(v.viewedAt || v.createdAt),
                         type: v.type || 'view'
                     };
