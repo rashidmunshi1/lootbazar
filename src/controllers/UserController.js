@@ -1,5 +1,5 @@
 const User = require("../models/UserModel");
-const sendAisensyOtp = require("../Helper/aisensyService");
+const sendWhatsAppOtp = require("../Helper/whatsappMetaService");
 
 const UserController = {
 
@@ -54,8 +54,8 @@ const UserController = {
             // Generate a dynamic 4-digit OTP
             const generatedOtp = Math.floor(1000 + Math.random() * 9000).toString();
 
-            // Send WhatsApp OTP via AiSensy
-            await sendAisensyOtp(formattedMobile, generatedOtp);
+            // Send WhatsApp OTP via Meta API (credentials from Settings DB)
+            await sendWhatsAppOtp(formattedMobile, generatedOtp);
 
             let savedUser;
             if (user) {
