@@ -9,6 +9,32 @@ const settingSchema = new mongoose.Schema({
     amount: {
         type: Number,
         default: 0
+    },
+    whatsapp: {
+        phoneNumberId: {
+            type: String,
+            default: '',
+            trim: true
+        },
+        accessToken: {
+            type: String,
+            default: '',
+            trim: true
+        },
+        templateName: {
+            type: String,
+            default: '',
+            trim: true
+        },
+        templateLanguage: {
+            type: String,
+            default: '',
+            trim: true
+        },
+        templateParamsCount: {
+            type: Number,
+            default: 0
+        }
     }
 }, { timestamps: true });
 

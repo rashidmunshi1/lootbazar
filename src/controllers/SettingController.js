@@ -22,16 +22,25 @@ const SettingController = {
     // Save/Update global setting
     saveSetting: async (req, res) => {
         try {
-            const { apiKey, amount } = req.body;
+            const { apiKey, amount, whatsapp } = req.body;
             let setting = await Setting.findOne();
             if (!setting) {
                 setting = new Setting({
                     apiKey: apiKey || '',
-                    amount: Number(amount) || 0
+                    amount: Number(amount) || 0,
+                    whatsapp: whatsapp || {}
                 });
             } else {
                 setting.apiKey = apiKey !== undefined ? apiKey : setting.apiKey;
                 setting.amount = amount !== undefined ? Number(amount) : setting.amount;
+                if (whatsapp) {
+                    if (!setting.whatsapp) setting.whatsapp = {};
+                    setting.whatsapp.phoneNumberId = whatsapp.phoneNumberId !== undefined ? whatsapp.phoneNumberId : setting.whatsapp.phoneNumberId;
+                    setting.whatsapp.accessToken = whatsapp.accessToken !== undefined ? whatsapp.accessToken : setting.whatsapp.accessToken;
+                    setting.whatsapp.templateName = whatsapp.templateName !== undefined ? whatsapp.templateName : setting.whatsapp.templateName;
+                    setting.whatsapp.templateLanguage = whatsapp.templateLanguage !== undefined ? whatsapp.templateLanguage : setting.whatsapp.templateLanguage;
+                    setting.whatsapp.templateParamsCount = whatsapp.templateParamsCount !== undefined ? Number(whatsapp.templateParamsCount) : setting.whatsapp.templateParamsCount;
+                }
             }
             await setting.save();
             res.status(200).json({
