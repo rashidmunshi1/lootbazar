@@ -21,13 +21,21 @@ viewProduct: async (req, res) => {
             return res.status(200).json({ message: "Owner viewed the product. No notification stored." });
         }
 
-        // Create a notification entry for product view
-        const newNotification = new Notification({
+        // Only create a new entry if this user hasn't viewed this product before
+        const existingNotification = await Notification.findOne({
             productId,
             viewerUserId,
             type
         });
-        await newNotification.save();
+
+        if (!existingNotification) {
+            const newNotification = new Notification({
+                productId,
+                viewerUserId,
+                type
+            });
+            await newNotification.save();
+        }
 
         res.status(201).json({ message: "Product viewed and notification stored successfully." });
     } catch (error) {

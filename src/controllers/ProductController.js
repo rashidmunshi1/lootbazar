@@ -14,7 +14,7 @@ const ProductController = {
             // Calculate the number of documents to skip
             const skip = (page - 1) * limit;
             
-            let query = {};
+            let query = { paymentStatus: 'paid' };
             if (req.query.all !== 'true') {
                 const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
                 query.createdAt = { $gt: twentyFourHoursAgo };
@@ -343,7 +343,7 @@ const ProductController = {
             const pageNumber = parseInt(page) || 1;
             const limitNumber = parseInt(limit) || 10;
     
-            let query = { category: categoryId };
+            let query = { category: categoryId, paymentStatus: 'paid' };
 
             // Default behavior is to restrict to products from the last 24 hours, unless all=true is passed
             if (all !== 'true') {
@@ -385,7 +385,7 @@ const ProductController = {
             const mongoose = require('mongoose');
             const Category = require("../models/CategoryModel");
             
-            let query = {};
+            let query = { paymentStatus: 'paid' };
 
             // By default, if no search term/category is provided, restrict to active products (last 24 hours)
             if (req.query.all !== 'true' && !search && !title && !category) {
@@ -506,6 +506,7 @@ const ProductController = {
                     return {
                         userId: viewer._id || null,
                         name: viewer.name || "Unknown User",
+                        profileImage: viewer.profileImage || null,
                         address: viewer.address || "Not specified",
                         phoneNumber: viewer.mobileno || "Not specified",
                         time: formatHumanTime(v.viewedAt || v.createdAt),
