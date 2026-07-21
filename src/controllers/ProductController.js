@@ -16,6 +16,7 @@ const ProductController = {
             
             let query = {};
             if (req.query.all !== 'true') {
+                query.paymentStatus = 'paid';
                 const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
                 query.createdAt = { $gt: twentyFourHoursAgo };
             }
