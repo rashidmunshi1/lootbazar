@@ -14,7 +14,7 @@ const ProductController = {
             // Calculate the number of documents to skip
             const skip = (page - 1) * limit;
             
-            let query = { paymentStatus: 'paid' };
+            let query = {};
             if (req.query.all !== 'true') {
                 const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
                 query.createdAt = { $gt: twentyFourHoursAgo };
