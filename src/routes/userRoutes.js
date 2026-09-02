@@ -9,15 +9,27 @@ const SettingController = require('../controllers/SettingController');
 const StatusController = require('../controllers/StatusController');
 const notificationController = require('../controllers/NotificationController');
 const VideoController = require('../controllers/VideoController');
-const {sendOtpHandler} = require('../controllers/otpController');
+const { sendOtpHandler } = require('../controllers/otpController');
 const CouponController = require('../controllers/CouponController');
 const OrderController = require('../controllers/OrderController');
+const LeadController = require('../controllers/LeadController');
+const WhatsAppJunctionController = require('../controllers/WhatsAppJunctionController');
 const apiKeyMiddleware = require('../Helper/apiKeyMiddleware');
 
 // Apply API Key validation middleware globally for all routes in this router
 router.use(apiKeyMiddleware);
 
-//user routes
+// WhatsApp Multi-Account OTP Junction routes
+router.get('/whatsapp-junction/accounts', WhatsAppJunctionController.getSessions);
+router.post('/whatsapp-junction/accounts/add', WhatsAppJunctionController.addSession);
+router.delete('/whatsapp-junction/accounts/:sessionId', WhatsAppJunctionController.delinkAccount);
+router.post('/whatsapp-junction/send-otp', WhatsAppJunctionController.sendOtp);
+
+// WhatsApp Lead routes
+router.post('/leads/capture', LeadController.captureLead);
+router.get('/leads', LeadController.getLeads);
+
+// User routes
 router.get('/user/index', userController.index);
 router.post('/register', uploadProfileImage.single('profileImage'), userController.store);
 router.post('/verify-otp', userController.verifyOtp);
@@ -27,40 +39,36 @@ router.put('/profile/:id/update', uploadProfileImage.single('profileImage'), use
 router.delete('/profile/:id/delete', userController.delete);
 router.post('/admin/login', userController.adminLogin);
 router.post('/send-otp', sendOtpHandler);
-//product routes
+
+// Product routes
 router.get('/products', ProductController.index);
 router.post('/products/store', upload.array('images', 10), ProductController.store);
 router.get('/products/:id/edit', ProductController.edit);
 router.put('/products/:id/update', upload.array('images', 10), ProductController.update);   
 router.delete('/products/:id/delete-image', ProductController.deleteImage);
 router.delete('/products/:id/delete', ProductController.delete);
-// GET all products by category ID
 router.get('/products/category/:categoryId', ProductController.listBycategoryId);
-// GET all products by user ID
 router.get('/products/user/:userId', ProductController.listByuserId);
-// Search for products
 router.get('/products/search', ProductController.searchProduct);
-// produts details
 router.get('/products/details/:id', ProductController.produtsDetails);
 
-//Category routes
+// Category routes
 router.get('/categories', CategoryController.index);
 router.post('/categories/store', upload.single('image'), CategoryController.store);
 router.get('/categories/:id/edit', CategoryController.edit);
 router.put('/categories/:id/update', upload.single('image'), CategoryController.update);
 router.delete('/categories/:id/delete', CategoryController.delete);
 
-//Setting routes
+// Setting routes
 router.get('/settings', SettingController.getSetting);
 router.post('/settings/save', SettingController.saveSetting);
 
-
-//status routes
+// Status routes
 router.post('/status/store', upload.single('media'), StatusController.store);
 router.get('/status', StatusController.index);
 router.delete('/status/:id', StatusController.deleteStatus);
 
-//Notification routes
+// Notification routes
 router.post('/products/:productId/view', notificationController.viewProduct);
 router.get('/products/:productId/viewers', notificationController.getProductViewers);
 router.get('/notifications', notificationController.getNotifications);
