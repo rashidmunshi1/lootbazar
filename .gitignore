@@ -3,3 +3,10 @@
 node_modules/
 src/uploads/*
 !src/uploads/.gitkeep
+
+# WhatsApp session data and puppeteer files
+whatsapp-session/
+whatsapp-sessions/
+whatsapp-session-*/
+.wwebjs_auth/
+.wwebjs_cache/
