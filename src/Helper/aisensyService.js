@@ -1,36 +1,69 @@
 const https = require('https');
+const Setting = require('../models/SettingModel');
 
 /**
- * Sends a WhatsApp OTP using the AiSensy Campaign API.
- * @param {string} phoneNumber - Recipient's phone number (e.g., '919876543210')
- * @param {string} otp - The OTP code
- * @returns {Promise<object>}
+ * Sends a WhatsApp OTP using the AiSensy Campaign API v2.
+ * Credentials are read dynamically from the database Settings collection,
+ * with fallback to environment variables and provided defaults.
+ *
+ * @param {string} phoneNumber - Recipient's phone number (e.g., '917016685053' or '7016685053')
+ * @param {string} otp - The OTP code to send (e.g. '1478')
+ * @param {object} [customConfig] - Optional override config { apiKey, campaignName, userName }
+ * @returns {Promise<object>} - AiSensy API response
  */
-const sendAisensyOtp = (phoneNumber, otp) => {
+const sendAisensyOtp = async (phoneNumber, otp, customConfig = {}) => {
+    // Fetch settings from database if not overridden
+    let waConfig = {};
+    try {
+        const setting = await Setting.findOne();
+        if (setting && setting.whatsapp) {
+            waConfig = setting.whatsapp;
+        }
+    } catch (dbErr) {
+        console.warn("Could not query Setting model for AiSensy config:", dbErr.message);
+    }
+
+    const apiKey = customConfig.apiKey || waConfig.apiKey || process.env.AISENSY_API_KEY || '';
+    const campaignName = customConfig.campaignName || waConfig.campaignName || process.env.AISENSY_CAMPAIGN_NAME || 'lbotp';
+    const userName = customConfig.userName || waConfig.userName || process.env.AISENSY_USER_NAME || 'Galaxy Traders';
+
+    if (!apiKey) {
+        console.log(`[AISENSY TEST MODE] (No API Key) OTP ${otp} would be sent to ${phoneNumber}`);
+        return { success: false, message: "AiSensy API Key is not configured." };
+    }
+
+    // Format destination number:
+    // Strip whitespace and leading '+'
+    let destination = String(phoneNumber).trim().replace(/^\+/, '');
+    // If it's a 10-digit Indian number without country code, prepend '91'
+    if (/^\d{10}$/.test(destination)) {
+        destination = "91" + destination;
+    }
+
+    const payload = JSON.stringify({
+        apiKey: apiKey,
+        campaignName: campaignName,
+        destination: destination,
+        userName: userName,
+        templateParams: [
+            String(otp)
+        ],
+        buttons: [
+            {
+                type: "button",
+                sub_type: "url",
+                index: "0",
+                parameters: [
+                    {
+                        type: "text",
+                        text: String(otp)
+                    }
+                ]
+            }
+        ]
+    });
+
     return new Promise((resolve, reject) => {
-        const apiKey = process.env.AISENSY_API_KEY;
-        const campaignName = process.env.AISENSY_CAMPAIGN_NAME || 'OTP_Campaign';
-
-        // Check if API Key exists, if not run in Test Mode
-        if (!apiKey) {
-            console.log(`[AISENSY TEST MODE] (No API Key) OTP ${otp} would be sent to ${phoneNumber}`);
-            return resolve({ success: true, message: "Test mode: AISENSY_API_KEY not configured" });
-        }
-
-        let formattedTo = String(phoneNumber).trim();
-        if (!formattedTo.startsWith('+')) {
-            formattedTo = '+' + formattedTo;
-        }
-
-        const payload = JSON.stringify({
-            apiKey: apiKey,
-            campaignName: campaignName,
-            destination: formattedTo,
-            userName: 'User',
-            templateParams: [otp],
-            source: 'API'
-        });
-
         const options = {
             hostname: 'backend.aisensy.com',
             port: 443,
@@ -51,10 +84,13 @@ const sendAisensyOtp = (phoneNumber, otp) => {
                 try {
                     const parsed = JSON.parse(body);
                     console.log("AiSensy API response:", parsed);
+                    if (parsed.success === false || parsed.success === "false" || parsed.error) {
+                        return reject(new Error(parsed.message || parsed.error || 'AiSensy API returned an error'));
+                    }
                     resolve(parsed);
                 } catch (e) {
-                    console.log("AiSensy API response (raw):", body);
-                    resolve(body);
+                    console.log("AiSensy API raw response:", body);
+                    resolve({ raw: body });
                 }
             });
         });

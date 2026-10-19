@@ -11,29 +11,20 @@ const settingSchema = new mongoose.Schema({
         default: 0
     },
     whatsapp: {
-        phoneNumberId: {
+        apiKey: {
             type: String,
             default: '',
             trim: true
         },
-        accessToken: {
+        campaignName: {
             type: String,
-            default: '',
+            default: 'lbotp',
             trim: true
         },
-        templateName: {
+        userName: {
             type: String,
-            default: '',
+            default: 'Galaxy Traders',
             trim: true
-        },
-        templateLanguage: {
-            type: String,
-            default: '',
-            trim: true
-        },
-        templateParamsCount: {
-            type: Number,
-            default: 0
         }
     }
 }, { timestamps: true });

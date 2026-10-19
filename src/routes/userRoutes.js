@@ -53,6 +53,7 @@ router.delete('/categories/:id/delete', CategoryController.delete);
 //Setting routes
 router.get('/settings', SettingController.getSetting);
 router.post('/settings/save', SettingController.saveSetting);
+router.post('/settings/test-whatsapp', SettingController.testWhatsApp);
 
 
 //status routes

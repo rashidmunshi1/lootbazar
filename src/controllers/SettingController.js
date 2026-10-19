@@ -1,4 +1,5 @@
 const Setting = require('../models/SettingModel');
+const sendAisensyOtp = require('../Helper/aisensyService');
 
 const SettingController = {
     // Fetch global setting
@@ -9,7 +10,12 @@ const SettingController = {
                 // Initialize default if not present
                 setting = new Setting({
                     apiKey: '',
-                    amount: 0
+                    amount: 0,
+                    whatsapp: {
+                        apiKey: process.env.AISENSY_API_KEY || '',
+                        campaignName: process.env.AISENSY_CAMPAIGN_NAME || 'lbotp',
+                        userName: process.env.AISENSY_USER_NAME || 'Galaxy Traders'
+                    }
                 });
                 await setting.save();
             }
@@ -28,18 +34,21 @@ const SettingController = {
                 setting = new Setting({
                     apiKey: apiKey || '',
                     amount: Number(amount) || 0,
-                    whatsapp: whatsapp || {}
+                    whatsapp: {
+                        apiKey: whatsapp?.apiKey || '',
+                        campaignName: whatsapp?.campaignName || 'lbotp',
+                        userName: whatsapp?.userName || 'Galaxy Traders'
+                    }
                 });
             } else {
                 setting.apiKey = apiKey !== undefined ? apiKey : setting.apiKey;
                 setting.amount = amount !== undefined ? Number(amount) : setting.amount;
                 if (whatsapp) {
-                    if (!setting.whatsapp) setting.whatsapp = {};
-                    setting.whatsapp.phoneNumberId = whatsapp.phoneNumberId !== undefined ? whatsapp.phoneNumberId : setting.whatsapp.phoneNumberId;
-                    setting.whatsapp.accessToken = whatsapp.accessToken !== undefined ? whatsapp.accessToken : setting.whatsapp.accessToken;
-                    setting.whatsapp.templateName = whatsapp.templateName !== undefined ? whatsapp.templateName : setting.whatsapp.templateName;
-                    setting.whatsapp.templateLanguage = whatsapp.templateLanguage !== undefined ? whatsapp.templateLanguage : setting.whatsapp.templateLanguage;
-                    setting.whatsapp.templateParamsCount = whatsapp.templateParamsCount !== undefined ? Number(whatsapp.templateParamsCount) : setting.whatsapp.templateParamsCount;
+                    setting.whatsapp = {
+                        apiKey: whatsapp.apiKey !== undefined ? whatsapp.apiKey : (setting.whatsapp?.apiKey || ''),
+                        campaignName: whatsapp.campaignName !== undefined ? whatsapp.campaignName : (setting.whatsapp?.campaignName || 'lbotp'),
+                        userName: whatsapp.userName !== undefined ? whatsapp.userName : (setting.whatsapp?.userName || 'Galaxy Traders')
+                    };
                 }
             }
             await setting.save();
@@ -49,6 +58,31 @@ const SettingController = {
             });
         } catch (error) {
             res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Test WhatsApp integration with AiSensy
+    testWhatsApp: async (req, res) => {
+        try {
+            const { destination, apiKey, campaignName, userName, otp } = req.body;
+            if (!destination) {
+                return res.status(400).json({ error: "Destination phone number is required" });
+            }
+            const testOtp = otp || Math.floor(1000 + Math.random() * 9000).toString();
+
+            const customConfig = {};
+            if (apiKey) customConfig.apiKey = apiKey;
+            if (campaignName) customConfig.campaignName = campaignName;
+            if (userName) customConfig.userName = userName;
+
+            const response = await sendAisensyOtp(destination, testOtp, customConfig);
+            res.status(200).json({
+                message: "AiSensy OTP sent successfully",
+                otp: testOtp,
+                response
+            });
+        } catch (error) {
+            res.status(500).json({ error: error.message || "Failed to send AiSensy test OTP" });
         }
     }
 };

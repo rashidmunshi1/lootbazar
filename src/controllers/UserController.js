@@ -1,5 +1,5 @@
 const User = require("../models/UserModel");
-const sendWhatsAppOtp = require("../Helper/whatsappMetaService");
+const sendWhatsAppOtp = require("../Helper/aisensyService");
 
 const UserController = {
 
