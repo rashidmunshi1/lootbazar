@@ -17,17 +17,17 @@ app.use((req, res, next) => {
     } else {
         res.setHeader('Access-Control-Allow-Origin', '*');
     }
-    
+
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    
+
     const requestHeaders = req.headers['access-control-request-headers'];
     if (requestHeaders) {
         res.setHeader('Access-Control-Allow-Headers', requestHeaders);
     } else {
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key, apikey, Accept, Origin, X-Requested-With');
     }
-    
+
     if (req.method === 'OPTIONS') {
         return res.sendStatus(200);
     }
@@ -54,7 +54,7 @@ const connectDb = async (req, res, next) => {
     if (mongoose.connection.readyState === 1) {
         return next();
     }
-    
+
     try {
         console.log('Connecting to MongoDB...');
         await mongoose.connect(process.env.MONGODB_URI);
@@ -84,4 +84,7 @@ app.use('/api/frontend', userRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+});
